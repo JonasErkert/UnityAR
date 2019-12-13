@@ -11,31 +11,42 @@ public
 	class GestureControl : MonoBehaviour
 {
 	public static GestureControl Instance { get; private set; }
-	
+
 	private GestureRecognizer GestureRecognizer;
 	[SerializeField] private GameObject BulltetPrefab;
 	[SerializeField] private Text DebugCanvasText;
 	private Transform MainCamTransform;
-	public LayerMask LayerMask;
+
+	[SerializeField] private LayerMask CursorMask;
+	[SerializeField] private LayerMask ArUiMask;
+	private LayerMask EverythingButCursorAndArUi;
+
 
 	void Awake()
 	{
 		GestureRecognizer = new GestureRecognizer();
-		GestureRecognizer.TappedEvent += (source, tapCount, ray) => { this.SendMessage("Shoot"); };
+		GestureRecognizer.TappedEvent += (source, tapCount, ray) =>
+		{
+			this.SendMessage("Shoot");
+			this.ClickButton();
+		};
+		
 		GestureRecognizer.StartCapturingGestures();
+		
+		EverythingButCursorAndArUi = (CursorMask ^ ArUiMask);
 	}
-	
+
 	void Start()
 	{
 		DebugCanvasText.text += this.name + " is active!";
 		MainCamTransform = Camera.main.transform;
-		LayerMask = ~LayerMask;
+		CursorMask = ~CursorMask;
 	}
 
 	void Shoot()
 	{
 		RaycastHit hitInfo;
-		if (Physics.Raycast(MainCamTransform.position, MainCamTransform.forward, out hitInfo, 100, LayerMask))
+		if (Physics.Raycast(MainCamTransform.position, MainCamTransform.forward, out hitInfo, 100, CursorMask))
 		{
 			GameObject GazedGameObject = hitInfo.collider.gameObject;
 			DebugCanvasText.text += "\n - " + GazedGameObject.name;
@@ -49,10 +60,21 @@ public
 			else
 			{
 				DebugCanvasText.text += "\n - Enemy created and anchored!";
-				GameObject Enemy = Instantiate(BulltetPrefab, hitInfo.point + hitInfo.normal * 0.3f, Quaternion.identity);
+				GameObject Enemy = Instantiate(BulltetPrefab, hitInfo.point + hitInfo.normal * 0.3f,
+					Quaternion.identity);
 				Enemy.tag = "Enemy";
 				Enemy.AddComponent<WorldAnchor>();
 			}
+		}
+	}
+	
+	void ClickButton()
+	{
+		RaycastHit hitInfo;
+		if (Physics.Raycast(MainCamTransform.position, MainCamTransform.forward, out hitInfo, 100, ArUiMask))
+		{
+			GameObject GazedGameObject = hitInfo.collider.gameObject;
+			GazedGameObject.SendMessage("ARButtonAirTabEnter");
 		}
 	}
 }
