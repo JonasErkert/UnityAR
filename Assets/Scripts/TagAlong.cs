@@ -32,7 +32,9 @@ public class TagAlong : MonoBehaviour
 	{
 		var currentPosition = MainCamera.transform.position;
 		var currentViewDir = MainCamera.transform.forward;
+		
 		Vector3 HeadToMenu = (this.transform.position - currentPosition).normalized;
+		
 		float Angle = Vector3.Angle(currentViewDir, HeadToMenu);
 		if (!MenuIsMoving && Angle > FOV * FOVPercent)
 		{
@@ -43,10 +45,16 @@ public class TagAlong : MonoBehaviour
 			DistanceStartEnd = Vector3.Distance(OldPosition, NewPosition);
 			MenuIsMoving = true;
 		}
-
+		
 		if (MenuIsMoving)
 		{
 			float CoveredDistance = (Time.time - StartTime) * Velocity;
+			
+			// Ensure DistanceStartEnd isn't 0
+			if (Mathf.Approximately(DistanceStartEnd, 0.0f))
+			{
+				DistanceStartEnd = 0.001f;
+			}
 			float Movement = CoveredDistance / DistanceStartEnd;
 			
 			this.transform.position = Vector3.Lerp(OldPosition, NewPosition, Movement);
